@@ -164,58 +164,62 @@ static NSColor *pointColor = nil;
 
 	// returns list of intersections
 	NSArray *crossPoints = [layer calculateIntersectionsStartPoint:[closestData[@"normal"] pointValue] endPoint:[closestData[@"minusNormal"] pointValue] decompose:NO];
+	// note: the first and last objects in crossPoints are identical to the start and end points (or vice versa)
 
-	if (crossPoints.count > 2) {
-		// find closest point in the list of intersections
-		// the point before and after that point is what we are looking for
-		NSInteger closestI = -1;
-		CGFloat closestDistance = 1000000;
-		NSInteger i = 0;
-		for (NSValue *crossValue in crossPoints) {
-			NSPoint cross = [crossValue pointValue];
-			CGFloat dist = GSDistance(cross, closestPoint);
-			if (dist < closestDistance) {
-				closestDistance = dist;
-				closestI = i;
-			}
-			i++;
+	if (crossPoints.count <= 2) {
+		// no intersections found
+		return;
+	}
+	
+	// find closest point in the list of intersections
+	// the point before and after that point is what we are looking for
+	NSInteger closestI = -1;
+	CGFloat closestDistance = 1000000;
+	NSInteger i = 0;
+	for (NSValue *crossValue in crossPoints) {
+		NSPoint cross = [crossValue pointValue];
+		CGFloat dist = GSDistance(cross, closestPoint);
+		if (dist < closestDistance) {
+			closestDistance = dist;
+			closestI = i;
 		}
-		if (closestI < 1) {
-			return;
+		i++;
+	}
+	if (closestI < 1) {
+		return;
+	}
+	i = closestI;
+	NSInteger n = i - 1;
+	if (i < crossPoints.count) {
+		i++;
+	}
+	@try {
+		NSPoint FirstCrossPointA = [crossPoints[i] pointValue];	// blue
+		CGFloat FirstDistance  = GSDistance(closestPoint, FirstCrossPointA);
+		NSPoint FirstCrossPointB = [crossPoints[n] pointValue];	// red
+		CGFloat SecondDistance = GSDistance(closestPoint, FirstCrossPointB);
+		
+		closestPoint = GSScalePoint(closestPoint, _scale);
+		closestPoint = GSAddPoints(closestPoint, _layerOrigin);
+		FirstCrossPointA = GSScalePoint(FirstCrossPointA, _scale);
+		FirstCrossPointA = GSAddPoints(FirstCrossPointA, _layerOrigin);
+		FirstCrossPointB = GSScalePoint(FirstCrossPointB, _scale);
+		FirstCrossPointB = GSAddPoints(FirstCrossPointB, _layerOrigin);
+		
+		[self drawPoint:closestPoint size:zoomedHandleSize color:nil];
+		
+		BOOL firstDraws = NO;
+		if (0.01 < FirstDistance && FirstDistance < 1199) {
+			firstDraws = YES;
+			[self showDistance:FirstDistance cross:FirstCrossPointA onCurve:closestPoint color:blue];
 		}
-		i = closestI;
-		NSInteger n = i - 1;
-		if (i < crossPoints.count) {
-			i++;
+		if (0.01 < SecondDistance && SecondDistance < 1199) {
+			NSColor *secondColor = firstDraws ? red : blue;
+			[self showDistance:SecondDistance cross:FirstCrossPointB onCurve:closestPoint color:secondColor];
 		}
-		@try {
-			NSPoint FirstCrossPointA = [crossPoints[i] pointValue];	// blue
-			CGFloat FirstDistance  = GSDistance(closestPoint, FirstCrossPointA);
-			NSPoint FirstCrossPointB = [crossPoints[n] pointValue];	// red
-			CGFloat SecondDistance = GSDistance(closestPoint, FirstCrossPointB);
-
-			closestPoint = GSScalePoint(closestPoint, _scale);
-			closestPoint = GSAddPoints(closestPoint, _layerOrigin);
-			FirstCrossPointA = GSScalePoint(FirstCrossPointA, _scale);
-			FirstCrossPointA = GSAddPoints(FirstCrossPointA, _layerOrigin);
-			FirstCrossPointB = GSScalePoint(FirstCrossPointB, _scale);
-			FirstCrossPointB = GSAddPoints(FirstCrossPointB, _layerOrigin);
-
-			[self drawPoint:closestPoint size:zoomedHandleSize color:nil];
-
-			BOOL firstDraws = NO;
-			if (0.01 < FirstDistance && FirstDistance < 1199) {
-				firstDraws = YES;
-				[self showDistance:FirstDistance cross:FirstCrossPointA onCurve:closestPoint color:blue];
-			}
-			if (0.01 < SecondDistance && SecondDistance < 1199) {
-				NSColor *secondColor = firstDraws ? red : blue;
-				[self showDistance:SecondDistance cross:FirstCrossPointB onCurve:closestPoint color:secondColor];
-			}
-		}
-		@catch (NSException *exception) {
-			NSLog(@"!!drawCrossingsForData %@", exception);
-		}
+	}
+	@catch (NSException *exception) {
+		NSLog(@"!!drawCrossingsForData %@", exception);
 	}
 }
 

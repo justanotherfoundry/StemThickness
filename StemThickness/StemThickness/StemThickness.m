@@ -169,6 +169,18 @@ static NSColor *pointColor = nil;
 	return (p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y);
 }
 
++(NSPoint)setLongerCoordinate:(NSPoint)v toLength:(CGFloat)length {
+	if (v.x > v.y) {
+		v.y *= length / v.x;
+		v.x = length;
+	}
+	else {
+		v.x *= length / v.y;
+		v.y = length;
+	}
+	return v;
+}
+
 // returns two or three objects
 +(NSArray *)closestPointsTo:(NSPoint)closestPoint inPoints:(NSArray *)points {
 	CGFloat prevDistanceSquared = 0;
@@ -278,10 +290,10 @@ static NSColor *pointColor = nil;
 - (NSArray *)intersectionsOnLayer:(GSLayer *)layer nearMouseCursor:(NSPoint)pt {
 	NSPoint closestPoint = [StemThickness closestPointToCursor:pt onLayer:layer];
 	if (closestPoint.x == CGFLOAT_MAX) return nil;
-	NSPoint direction = GSUnitVectorFromTo(pt, closestPoint);
-	NSPoint closestPointNormal = GSAddPoints(pt, GSScalePoint(direction, 10000));
-	NSPoint minusClosestPointNormal = GSAddPoints(pt, GSScalePoint(direction, -10000));
-	NSArray *crossPoints = [layer calculateIntersectionsStartPoint:closestPointNormal endPoint:minusClosestPointNormal decompose:NO];
+	NSPoint direction = [StemThickness setLongerCoordinate:GSSubtractPoints(pt, closestPoint) toLength:_font.unitsPerEm+layer.width];
+	NSPoint startPoint = GSAddPoints(pt, direction);
+	NSPoint endPoint = GSSubtractPoints(pt, direction);
+	NSArray *crossPoints = [layer calculateIntersectionsStartPoint:startPoint endPoint:endPoint decompose:NO];
 	// note: the first and last objects in crossPoints are identical to the start and end points (or vice versa)
 	if (crossPoints.count <= 2) {
 		// no intersections found
@@ -297,7 +309,7 @@ static NSColor *pointColor = nil;
 		// not vertical
 		if (pt.x < xLeft || pt.x > xRight) {
 			// outside the crossPoints
-			crossPoints = [self intersectionsOnNeighbourLayer:layer left:(pt.x < xLeft) crossPoints:crossPoints closestPointNormal:closestPointNormal minusClosestPointNormal:minusClosestPointNormal];
+			crossPoints = [self intersectionsOnNeighbourLayer:layer left:(pt.x < xLeft) crossPoints:crossPoints closestPointNormal:startPoint minusClosestPointNormal:endPoint];
 			// TODO: the point closest to the mouse cursor may be on the neighbouring layer
 			// TODO: ideally, the tool could be used to measure between or within far away neighbours,
 			//       just like Glyphs’ measurement tool

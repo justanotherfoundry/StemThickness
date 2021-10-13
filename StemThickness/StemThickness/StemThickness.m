@@ -153,12 +153,16 @@ static NSColor *pointColor = nil;
 	[bez stroke];
 }
 
++(CGFloat)distanceSquared:(NSPoint)p1 to:(NSPoint)p2 {
+	return (p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y);
+}
+
 // returns two or three objects
 +(NSArray *)closestPointsTo:(NSPoint)closestPoint inPoints:(NSArray *)points {
 	CGFloat prevDistanceSquared = 0;
 	for (int i = 0; i != points.count; ++i) {
 		NSPoint point = [points[i] pointValue];
-		CGFloat distanceSquared = (point.x - closestPoint.x)*(point.x - closestPoint.x) + (point.y - closestPoint.y)*(point.y - closestPoint.y);
+		CGFloat distanceSquared = [StemThickness distanceSquared:point to:closestPoint];
 		if (i != 0 && distanceSquared > prevDistanceSquared) {
 			// as the points are all on one line, and sorted, we know we would not find any closer points.
 			// this means the previous one must be the closest
@@ -234,13 +238,13 @@ static NSColor *pointColor = nil;
 
 +(NSPoint)closestPointToCursor:(NSPoint)cursor onLayer:(GSLayer *)layer {
 	NSPoint closestPoint = NSMakePoint(CGFLOAT_MAX, CGFLOAT_MAX);
-	CGFloat closestDist = CGFLOAT_MAX;
+	CGFloat closestDistSquared = CGFLOAT_MAX;
 	for (GSPath *path in layer.paths) {
 		CGFloat currPathTime; // just a dummy, result unused
 		NSPoint currClosestPoint = [path nearestPointOnPath:cursor pathTime:&currPathTime];
-		CGFloat currDist = GSDistance(currClosestPoint, cursor);
-		if (currDist < closestDist) {
-			closestDist = currDist;
+		CGFloat currDistSquared = [StemThickness distanceSquared:cursor to:currClosestPoint];
+		if (currDistSquared < closestDistSquared) {
+			closestDistSquared = currDistSquared;
 			closestPoint = currClosestPoint;
 		}
 	}

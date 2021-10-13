@@ -19,6 +19,16 @@
 #import <GlyphsCore/GSProxyShapes.h>
 #import <GlyphsCore/GSCallbackHandler.h>
 #import <GlyphsCore/NSString+BadgeDrawing.h>
+#import <GlyphsCore/GSWindowControllerProtocol.h>
+
+@interface GSWindowController: NSWindowController<GSWindowControllerProtocol>
+@property NSArray *toolInstances;
+@end
+
+@interface GSDocument: NSDocument
+- (GSFontMaster*)selectedFontMaster;
+- (GSWindowController *) windowController;
+@end
 
 NSPoint GSMiddlePointStem(NSPoint A, NSPoint B) {
 	A.x = (A.x + B.x) * 0.5;
@@ -46,10 +56,13 @@ static NSColor *blue = nil;
 static NSColor *pointColor = nil;
 
 @implementation StemThickness {
+	GSFont *_font;
+	GSFontMaster *_master;
 	NSViewController <GSGlyphEditViewControllerProtocol> *_editViewController;
-	id _lastNodePair;
 	CGFloat _scale;
 	NSPoint _layerOrigin;
+	NSUInteger _textCursorPosition;
+	NSArray *_allLayers;
 }
 
 + (void)initialize {
@@ -89,8 +102,8 @@ static NSColor *pointColor = nil;
 - (void)drawForegroundWithOptions:(NSDictionary *)options {
 	NSView <GSGlyphEditViewProtocol> *view = _editViewController.graphicView;
 	_scale = view.scale; // scale of edit window
-	GSFont *font = [_editViewController representedObject];
-	CGFloat upm = font.unitsPerEm;
+	_font = [_editViewController representedObject];
+	CGFloat upm = _font.unitsPerEm;
 	if (_scale < 0.15 * 1000 / upm || _scale > 6.0 * 1000 / upm) {
 		return;
 	}
@@ -98,6 +111,12 @@ static NSColor *pointColor = nil;
 	_layerOrigin = view.activePosition;
 
 	GSLayer *layer = [view activeLayer];
+	GSDocument *document =  _font.parent;
+	_master = document.selectedFontMaster;
+	GSWindowController *wc = document.windowController;
+	_allLayers = [wc allLayers];
+	_textCursorPosition = view.selectedRange.location;
+	
 	NSArray *intersections = [self intersectionsOnLayer:layer nearMouseCursor:crossHairCenter];
 	if (intersections == nil) return;
 	[self drawCrossingsForPoints:intersections];
@@ -225,6 +244,37 @@ static NSColor *pointColor = nil;
 	return closestPoint;
 }
 
+- (NSArray *)intersectionsOnNeighbourLayer:(GSLayer *)layer left:(BOOL)left crossPoints:(NSArray *)crossPoints closestPointNormal:(NSPoint)closestPointNormal minusClosestPointNormal:(NSPoint)minusClosestPointNormal {
+	if (left && _textCursorPosition == 0) return crossPoints;
+	if (! left && _textCursorPosition == _allLayers.count - 1) return crossPoints;
+	assert(_allLayers[_textCursorPosition] == layer);
+	GSLayer *neighbour = left ? _allLayers[_textCursorPosition-1] : _allLayers[_textCursorPosition+1];
+	CGFloat xOffset = left ? -neighbour.width : layer.width;
+	GSGlyph *firstGlyph = left ? neighbour.parent : layer.parent;
+	GSGlyph *secondGlyph = left ? layer.parent : neighbour.parent;
+	CGFloat kerning = [_font kerningForFontMasterID:_master.id firstGlyph:firstGlyph secondGlyph:secondGlyph direction:GSWritingDirectionLeftToRight];
+	if (kerning != LLONG_MAX) {
+		// ^ Glyphs returns this funny value if kerning not defined
+		xOffset += left ? -kerning : kerning;
+	}
+	closestPointNormal.x -= xOffset;
+	minusClosestPointNormal.x -= xOffset;
+	NSArray *crossPointsNeighbour = [neighbour calculateIntersectionsStartPoint:closestPointNormal endPoint:minusClosestPointNormal decompose:NO];
+	if (crossPointsNeighbour.count < 2) {
+		// no neighbour intersections
+		return crossPoints;
+	}
+	crossPointsNeighbour = [crossPointsNeighbour subarrayWithRange:NSMakeRange(1, crossPointsNeighbour.count - 2)];
+	NSMutableArray *temp = left ? [NSMutableArray array] : [crossPoints mutableCopy];
+	for (NSValue *v in crossPointsNeighbour) {
+		NSPoint point = v.pointValue;
+		point.x += xOffset;
+		[temp addObject:@(point)];
+	}
+	if (left) [temp addObjectsFromArray:crossPoints];
+	return temp;
+}
+
 - (NSArray *)intersectionsOnLayer:(GSLayer *)layer nearMouseCursor:(NSPoint)pt {
 	NSPoint closestPoint = [StemThickness closestPointToCursor:pt onLayer:layer];
 	if ( closestPoint.x == CGFLOAT_MAX ) return nil;
@@ -243,6 +293,20 @@ static NSColor *pointColor = nil;
 	}
 	// remove the first and last element:
 	crossPoints = [crossPoints subarrayWithRange:NSMakeRange(1, crossPoints.count - 2)];
+	
+	CGFloat xLeft = [crossPoints.firstObject pointValue].x;
+	CGFloat xRight = [crossPoints.lastObject pointValue].x;
+	assert(xRight > xLeft - 0.001);
+	if (xRight > xLeft + 0.001) {
+		// not vertical
+		if (pt.x < xLeft || pt.x > xRight) {
+			// outside the crossPoints
+			crossPoints = [self intersectionsOnNeighbourLayer:layer left:(pt.x < xLeft) crossPoints:crossPoints closestPointNormal:closestPointNormal minusClosestPointNormal:minusClosestPointNormal];
+			// TODO: the point closest to the mouse cursor may be on the neighbouring layer
+			// TODO: ideally, the tool could be used to measure between or within far away neighbours,
+			//       just like Glyphs’ measurement tool
+		}
+	}
 	return [StemThickness closestPointsTo:closestPoint inPoints:crossPoints];
 }
 

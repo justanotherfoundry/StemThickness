@@ -98,16 +98,9 @@ static NSColor *pointColor = nil;
 	_layerOrigin = view.activePosition;
 
 	GSLayer *layer = [view activeLayer];
-	NSDictionary *closestData = [self calcClosestInfo:layer position:crossHairCenter];
-	if (!closestData) {
-		return;
-	}
-	GSLog(@"closestData %@", closestData);
-	if (GSDistance(crossHairCenter, [closestData[@"onCurve"] pointValue]) > 35 / _scale) {
-		_lastNodePair = nil;
-		return;
-	}
-	[self drawCrossingsForData:closestData];
+	NSArray *intersections = [self intersectionsOnLayer:layer nearMouseCursor:crossHairCenter];
+	if (intersections == nil) return;
+	[self drawCrossingsForPoints:intersections];
 }
 
 - (CGFloat)getHandleSize {
@@ -176,28 +169,6 @@ static NSColor *pointColor = nil;
 	return [points subarrayWithRange:NSMakeRange(points.count - 2, 2)]; // the last two points
 }
 
-- (void)drawCrossingsForData:(NSDictionary *)closestData {
-	CGFloat HandleSize = [self getHandleSize];
-
-	CGFloat zoomedHandleSize = HandleSize * 0.875;
-
-	GSLayer *layer = closestData[@"layer"];
-	NSPoint closestPoint = [closestData[@"onCurve"] pointValue];
-
-	// returns list of intersections
-	NSArray *crossPoints = [layer calculateIntersectionsStartPoint:[closestData[@"normal"] pointValue] endPoint:[closestData[@"minusNormal"] pointValue] decompose:NO];
-	// note: the first and last objects in crossPoints are identical to the start and end points (or vice versa)
-
-	if (crossPoints.count <= 2) {
-		// no intersections found
-		return;
-	}
-	// remove the first and last element:
-	crossPoints = [crossPoints subarrayWithRange:NSMakeRange(1, crossPoints.count - 2)];
-	crossPoints = [StemThickness closestPointsTo:closestPoint inPoints:crossPoints];
-	[self drawCrossingsForPoints:crossPoints];
-}
-
 - (void)drawCrossingsForPoints:(NSArray *)crossPoints {
 	NSPoint p0 = [crossPoints[0] pointValue];
 	NSPoint p1 = [crossPoints[1] pointValue];
@@ -254,19 +225,26 @@ static NSColor *pointColor = nil;
 	return closestPoint;
 }
 
-- (NSDictionary *)calcClosestInfo:(GSLayer *)layer position:(NSPoint)pt {
+- (NSArray *)intersectionsOnLayer:(GSLayer *)layer nearMouseCursor:(NSPoint)pt {
 	@try {
 		NSPoint closestPoint = [StemThickness closestPointToCursor:pt onLayer:layer];
 		if ( closestPoint.x == CGFLOAT_MAX ) return nil;
 		NSPoint direction = GSUnitVectorFromTo(pt, closestPoint);
 		NSPoint closestPointNormal = GSAddPoints(pt, GSScalePoint(direction, 10000));
 		NSPoint minusClosestPointNormal = GSAddPoints(pt, GSScalePoint(direction, -10000));
-		return @{
-			@"onCurve": @(closestPoint),
-			@"normal": @(closestPointNormal),
-			@"minusNormal": @(minusClosestPointNormal),
-			@"layer": layer,
-		};
+		if (GSDistance(pt, closestPoint) > 35 / _scale) {
+			return nil;
+			// TODO: this is debatable. what is the benefit?
+		}
+		NSArray *crossPoints = [layer calculateIntersectionsStartPoint:closestPointNormal endPoint:minusClosestPointNormal decompose:NO];
+		// note: the first and last objects in crossPoints are identical to the start and end points (or vice versa)
+		if (crossPoints.count <= 2) {
+			// no intersections found
+			return nil;
+		}
+		// remove the first and last element (which are identical to the start and end points or vice versa):
+		crossPoints = [crossPoints subarrayWithRange:NSMakeRange(1, crossPoints.count - 2)];
+		return [StemThickness closestPointsTo:closestPoint inPoints:crossPoints];
 	}
 	@catch (NSException *exception) {
 		NSLog(@"__calcClosestInfo: %@", exception);

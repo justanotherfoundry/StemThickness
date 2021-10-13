@@ -170,7 +170,7 @@ static NSColor *pointColor = nil;
 }
 
 +(NSPoint)setLongerCoordinate:(NSPoint)v toLength:(CGFloat)length {
-	if (v.x > v.y) {
+	if (fabs(v.x) > fabs(v.y)) {
 		v.y *= length / v.x;
 		v.x = length;
 	}

@@ -109,7 +109,7 @@ static NSColor *pointColor = nil;
 	}
 	NSPoint crossHairCenter = [view getActiveLocation:[NSApp currentEvent]];
 	_layerOrigin = view.activePosition;
-
+	
 	GSLayer *layer = [view activeLayer];
 	GSDocument *document =  _font.parent;
 	_master = document.selectedFontMaster;
@@ -139,7 +139,7 @@ static NSColor *pointColor = nil;
 }
 
 - (void)drawPoint:(NSPoint)thisPoint size:(CGFloat)size color:(NSColor *)color {
-
+	
 	if (!color) {
 		color = pointColor;
 	}
@@ -193,7 +193,7 @@ static NSColor *pointColor = nil;
 	NSPoint p1 = [crossPoints[1] pointValue];
 	CGFloat distance01 = GSDistance(p0, p1);
 	[self showDistance:distance01 cross:p0 onCurve:p1 color:blue];
-	if ( crossPoints.count == 3 ) {
+	if (crossPoints.count == 3) {
 		NSPoint p2 = [crossPoints[2] pointValue];
 		CGFloat distance12 = GSDistance(p2, p1);
 		[self showDistance:distance12 cross:p2 onCurve:p1 color:blue];
@@ -277,7 +277,7 @@ static NSColor *pointColor = nil;
 
 - (NSArray *)intersectionsOnLayer:(GSLayer *)layer nearMouseCursor:(NSPoint)pt {
 	NSPoint closestPoint = [StemThickness closestPointToCursor:pt onLayer:layer];
-	if ( closestPoint.x == CGFLOAT_MAX ) return nil;
+	if (closestPoint.x == CGFLOAT_MAX) return nil;
 	NSPoint direction = GSUnitVectorFromTo(pt, closestPoint);
 	NSPoint closestPointNormal = GSAddPoints(pt, GSScalePoint(direction, 10000));
 	NSPoint minusClosestPointNormal = GSAddPoints(pt, GSScalePoint(direction, -10000));

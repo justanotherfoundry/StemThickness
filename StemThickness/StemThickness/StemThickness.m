@@ -30,10 +30,10 @@
 - (GSWindowController *) windowController;
 @end
 
-NSPoint GSMiddlePointStem(NSPoint A, NSPoint B) {
-	A.x = (A.x + B.x) * 0.5;
-	A.y = (A.y + B.y) * 0.5;
-	return A;
+NSPoint GSMiddlePointStem(NSPoint a, NSPoint b) {
+	a.x = (a.x + b.x) * 0.5;
+	a.y = (a.y + b.y) * 0.5;
+	return a;
 }
 
 NSString *formatDistance(CGFloat d, CGFloat scale) {
@@ -126,11 +126,11 @@ static NSColor *pointColor = nil;
 	/*
 	 Returns the current handle size as set in user preferences.
 	 */
-	NSUInteger Selected = [NSUserDefaults.standardUserDefaults integerForKey:@"GSHandleSize"];
-	if (Selected == 0) {
+	NSUInteger selected = [NSUserDefaults.standardUserDefaults integerForKey:@"GSHandleSize"];
+	if (selected == 0) {
 		return 5.0;
 	}
-	else if (Selected == 2) {
+	else if (selected == 2) {
 		return 10.0;
 	}
 	else {
@@ -155,13 +155,13 @@ static NSColor *pointColor = nil;
 	}
 }
 
-- (void)drawDashedStrokeA:(NSPoint)A b:(NSPoint)B {
+- (void)drawDashedStrokeA:(NSPoint)a b:(NSPoint)b {
 	NSBezierPath *bez = [NSBezierPath bezierPath];
 	bez.lineWidth = 0;
 	CGFloat dash[] = {2.0, 2.0};
 	[bez setLineDash:dash count:2 phase:0];
-	[bez moveToPoint:A];
-	[bez lineToPoint:B];
+	[bez moveToPoint:a];
+	[bez lineToPoint:b];
 	[bez stroke];
 }
 

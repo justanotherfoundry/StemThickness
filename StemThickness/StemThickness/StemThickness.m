@@ -232,22 +232,25 @@ static NSColor *pointColor = nil;
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
++(NSPoint)closestPointToCursor:(NSPoint)cursor onLayer:(GSLayer *)layer {
+	NSPoint closestPoint = NSMakePoint(CGFLOAT_MAX, CGFLOAT_MAX);
+	CGFloat closestDist = CGFLOAT_MAX;
+	for (GSPath *path in layer.paths) {
+		CGFloat currPathTime; // just a dummy, result unused
+		NSPoint currClosestPoint = [path nearestPointOnPath:cursor pathTime:&currPathTime];
+		CGFloat currDist = GSDistance(currClosestPoint, cursor);
+		if (currDist < closestDist) {
+			closestDist = currDist;
+			closestPoint = currClosestPoint;
+		}
+	}
+	return closestPoint;
+}
+
 - (NSDictionary *)calcClosestInfo:(GSLayer *)layer position:(NSPoint)pt {
 	@try {
-		NSPoint closestPoint = NSZeroPoint;
-		CGFloat dist = 100000.0;
-		for (GSPath *path in layer.paths) {
-			CGFloat currPathTime;
-			NSPoint currClosestPoint = [path nearestPointOnPath:pt pathTime:&currPathTime];
-			CGFloat currDist = GSDistance(currClosestPoint, pt);
-			if (currDist < dist) {
-				dist = currDist;
-				closestPoint = currClosestPoint;
-			}
-		}
-		if (dist > 99999.0) {
-			return nil;
-		}
+		NSPoint closestPoint = [StemThickness closestPointToCursor:pt onLayer:layer];
+		if ( closestPoint.x == CGFLOAT_MAX ) return nil;
 		NSPoint direction = GSUnitVectorFromTo(pt, closestPoint);
 		NSPoint closestPointNormal = GSAddPoints(pt, GSScalePoint(direction, 10000));
 		NSPoint minusClosestPointNormal = GSAddPoints(pt, GSScalePoint(direction, -10000));

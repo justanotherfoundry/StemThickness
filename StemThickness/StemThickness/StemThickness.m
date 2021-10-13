@@ -281,10 +281,6 @@ static NSColor *pointColor = nil;
 	NSPoint direction = GSUnitVectorFromTo(pt, closestPoint);
 	NSPoint closestPointNormal = GSAddPoints(pt, GSScalePoint(direction, 10000));
 	NSPoint minusClosestPointNormal = GSAddPoints(pt, GSScalePoint(direction, -10000));
-	if (GSDistance(pt, closestPoint) > 35 / _scale) {
-		return nil;
-		// TODO: this is debatable. what is the benefit?
-	}
 	NSArray *crossPoints = [layer calculateIntersectionsStartPoint:closestPointNormal endPoint:minusClosestPointNormal decompose:NO];
 	// note: the first and last objects in crossPoints are identical to the start and end points (or vice versa)
 	if (crossPoints.count <= 2) {

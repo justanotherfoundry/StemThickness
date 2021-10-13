@@ -195,7 +195,10 @@ static NSColor *pointColor = nil;
 	// remove the first and last element:
 	crossPoints = [crossPoints subarrayWithRange:NSMakeRange(1, crossPoints.count - 2)];
 	crossPoints = [StemThickness closestPointsTo:closestPoint inPoints:crossPoints];
-	
+	[self drawCrossingsForPoints:crossPoints];
+}
+
+- (void)drawCrossingsForPoints:(NSArray *)crossPoints {
 	NSPoint p0 = [crossPoints[0] pointValue];
 	NSPoint p1 = [crossPoints[1] pointValue];
 	CGFloat distance01 = GSDistance(p0, p1);

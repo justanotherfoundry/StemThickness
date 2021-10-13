@@ -153,6 +153,25 @@ static NSColor *pointColor = nil;
 	[bez stroke];
 }
 
+// returns two or three objects
++(NSArray *)closestPointsTo:(NSPoint)closestPoint inPoints:(NSArray *)points {
+	CGFloat prevDistanceSquared = 0;
+	for (int i = 0; i != points.count; ++i) {
+		NSPoint point = [points[i] pointValue];
+		CGFloat distanceSquared = (point.x - closestPoint.x)*(point.x - closestPoint.x) + (point.y - closestPoint.y)*(point.y - closestPoint.y);
+		if (i != 0 && distanceSquared > prevDistanceSquared) {
+			// as the points are all on one line, and sorted, we know we would not find any closer points.
+			// this means the previous one must be the closest
+			if (i == 1) {
+				return [points subarrayWithRange:NSMakeRange(0, 2)]; // the first two points
+			}
+			return [points subarrayWithRange:NSMakeRange(i-2, 3)]; // closest and two neighbours
+		}
+		prevDistanceSquared = distanceSquared;
+	}
+	return [points subarrayWithRange:NSMakeRange(points.count - 2, 2)]; // the last two points
+}
+
 - (void)drawCrossingsForData:(NSDictionary *)closestData {
 	CGFloat HandleSize = [self getHandleSize];
 
@@ -170,56 +189,32 @@ static NSColor *pointColor = nil;
 		// no intersections found
 		return;
 	}
+	// remove the first and last element:
+	crossPoints = [crossPoints subarrayWithRange:NSMakeRange(1, crossPoints.count - 2)];
+	crossPoints = [StemThickness closestPointsTo:closestPoint inPoints:crossPoints];
 	
-	// find closest point in the list of intersections
-	// the point before and after that point is what we are looking for
-	NSInteger closestI = -1;
-	CGFloat closestDistance = 1000000;
-	NSInteger i = 0;
-	for (NSValue *crossValue in crossPoints) {
-		NSPoint cross = [crossValue pointValue];
-		CGFloat dist = GSDistance(cross, closestPoint);
-		if (dist < closestDistance) {
-			closestDistance = dist;
-			closestI = i;
-		}
-		i++;
+	NSPoint FirstCrossPointA = [crossPoints.lastObject pointValue];	// blue
+	CGFloat FirstDistance  = GSDistance(closestPoint, FirstCrossPointA);
+	NSPoint FirstCrossPointB = [crossPoints.firstObject pointValue];	// red
+	CGFloat SecondDistance = GSDistance(closestPoint, FirstCrossPointB);
+	
+	closestPoint = GSScalePoint(closestPoint, _scale);
+	closestPoint = GSAddPoints(closestPoint, _layerOrigin);
+	FirstCrossPointA = GSScalePoint(FirstCrossPointA, _scale);
+	FirstCrossPointA = GSAddPoints(FirstCrossPointA, _layerOrigin);
+	FirstCrossPointB = GSScalePoint(FirstCrossPointB, _scale);
+	FirstCrossPointB = GSAddPoints(FirstCrossPointB, _layerOrigin);
+	
+	[self drawPoint:closestPoint size:zoomedHandleSize color:nil];
+	
+	BOOL firstDraws = NO;
+	if (0.01 < FirstDistance && FirstDistance < 1199) {
+		firstDraws = YES;
+		[self showDistance:FirstDistance cross:FirstCrossPointA onCurve:closestPoint color:blue];
 	}
-	if (closestI < 1) {
-		return;
-	}
-	i = closestI;
-	NSInteger n = i - 1;
-	if (i < crossPoints.count) {
-		i++;
-	}
-	@try {
-		NSPoint FirstCrossPointA = [crossPoints[i] pointValue];	// blue
-		CGFloat FirstDistance  = GSDistance(closestPoint, FirstCrossPointA);
-		NSPoint FirstCrossPointB = [crossPoints[n] pointValue];	// red
-		CGFloat SecondDistance = GSDistance(closestPoint, FirstCrossPointB);
-		
-		closestPoint = GSScalePoint(closestPoint, _scale);
-		closestPoint = GSAddPoints(closestPoint, _layerOrigin);
-		FirstCrossPointA = GSScalePoint(FirstCrossPointA, _scale);
-		FirstCrossPointA = GSAddPoints(FirstCrossPointA, _layerOrigin);
-		FirstCrossPointB = GSScalePoint(FirstCrossPointB, _scale);
-		FirstCrossPointB = GSAddPoints(FirstCrossPointB, _layerOrigin);
-		
-		[self drawPoint:closestPoint size:zoomedHandleSize color:nil];
-		
-		BOOL firstDraws = NO;
-		if (0.01 < FirstDistance && FirstDistance < 1199) {
-			firstDraws = YES;
-			[self showDistance:FirstDistance cross:FirstCrossPointA onCurve:closestPoint color:blue];
-		}
-		if (0.01 < SecondDistance && SecondDistance < 1199) {
-			NSColor *secondColor = firstDraws ? red : blue;
-			[self showDistance:SecondDistance cross:FirstCrossPointB onCurve:closestPoint color:secondColor];
-		}
-	}
-	@catch (NSException *exception) {
-		NSLog(@"!!drawCrossingsForData %@", exception);
+	if (0.01 < SecondDistance && SecondDistance < 1199) {
+		NSColor *secondColor = firstDraws ? red : blue;
+		[self showDistance:SecondDistance cross:FirstCrossPointB onCurve:closestPoint color:secondColor];
 	}
 }
 

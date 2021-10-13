@@ -180,7 +180,6 @@ static NSColor *pointColor = nil;
 	GSLayer *layer = closestData[@"layer"];
 	NSPoint closestPoint = [closestData[@"onCurve"] pointValue];
 
-
 	// returns list of intersections
 	NSArray *crossPoints = [layer calculateIntersectionsStartPoint:[closestData[@"normal"] pointValue] endPoint:[closestData[@"minusNormal"] pointValue] decompose:NO];
 	// note: the first and last objects in crossPoints are identical to the start and end points (or vice versa)
@@ -193,34 +192,22 @@ static NSColor *pointColor = nil;
 	crossPoints = [crossPoints subarrayWithRange:NSMakeRange(1, crossPoints.count - 2)];
 	crossPoints = [StemThickness closestPointsTo:closestPoint inPoints:crossPoints];
 	
-	NSPoint FirstCrossPointA = [crossPoints.lastObject pointValue];	// blue
-	CGFloat FirstDistance  = GSDistance(closestPoint, FirstCrossPointA);
-	NSPoint FirstCrossPointB = [crossPoints.firstObject pointValue];	// red
-	CGFloat SecondDistance = GSDistance(closestPoint, FirstCrossPointB);
-	
-	closestPoint = GSScalePoint(closestPoint, _scale);
-	closestPoint = GSAddPoints(closestPoint, _layerOrigin);
-	FirstCrossPointA = GSScalePoint(FirstCrossPointA, _scale);
-	FirstCrossPointA = GSAddPoints(FirstCrossPointA, _layerOrigin);
-	FirstCrossPointB = GSScalePoint(FirstCrossPointB, _scale);
-	FirstCrossPointB = GSAddPoints(FirstCrossPointB, _layerOrigin);
-	
-	[self drawPoint:closestPoint size:zoomedHandleSize color:nil];
-	
-	BOOL firstDraws = NO;
-	if (0.01 < FirstDistance && FirstDistance < 1199) {
-		firstDraws = YES;
-		[self showDistance:FirstDistance cross:FirstCrossPointA onCurve:closestPoint color:blue];
-	}
-	if (0.01 < SecondDistance && SecondDistance < 1199) {
-		NSColor *secondColor = firstDraws ? red : blue;
-		[self showDistance:SecondDistance cross:FirstCrossPointB onCurve:closestPoint color:secondColor];
+	NSPoint p0 = [crossPoints[0] pointValue];
+	NSPoint p1 = [crossPoints[1] pointValue];
+	CGFloat distance01 = GSDistance(p0, p1);
+	[self showDistance:distance01 cross:p0 onCurve:p1 color:blue];
+	if ( crossPoints.count == 3 ) {
+		NSPoint p2 = [crossPoints[2] pointValue];
+		CGFloat distance12 = GSDistance(p2, p1);
+		[self showDistance:distance12 cross:p2 onCurve:p1 color:blue];
 	}
 }
 
 - (void)showDistance:(CGFloat)d cross:(NSPoint)cross onCurve:(NSPoint)onCurve color:(NSColor *)color {
-	// self.lastNodePair = (cross, onCurve) //TODO
-
+	cross = GSScalePoint(cross, _scale);
+	cross = GSAddPoints(cross, _layerOrigin);
+	onCurve = GSScalePoint(onCurve, _scale);
+	onCurve = GSAddPoints(onCurve, _layerOrigin);
 	CGFloat handleSize = [self getHandleSize];
 	CGFloat zoomedHandleSize = handleSize * 0.875 * 0.75;
 	NSString *distanceShowed = formatDistance(d, _scale);
@@ -230,6 +217,7 @@ static NSColor *pointColor = nil;
 	CGFloat fontSize = handleSize * 1.5 * pow(_scale, 0.1);
 	[distanceShowed drawBadgeAtPoint:thisDistanceCenter size:fontSize color:NSColor.textColor backgroundColor:[color blendedColorWithFraction:0.8 ofColor:NSColor.textBackgroundColor] alignment:GSCenterCenter visibleInRect:NSMakeRect(NSNotFound, 0, 0, 0)];
 	[self drawPoint:cross size:zoomedHandleSize color:color];
+	[self drawPoint:onCurve size:zoomedHandleSize color:color];
 }
 
 - (void)mouseMoved:(NSNotification *)notification {

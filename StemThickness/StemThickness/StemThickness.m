@@ -226,30 +226,24 @@ static NSColor *pointColor = nil;
 }
 
 - (NSArray *)intersectionsOnLayer:(GSLayer *)layer nearMouseCursor:(NSPoint)pt {
-	@try {
-		NSPoint closestPoint = [StemThickness closestPointToCursor:pt onLayer:layer];
-		if ( closestPoint.x == CGFLOAT_MAX ) return nil;
-		NSPoint direction = GSUnitVectorFromTo(pt, closestPoint);
-		NSPoint closestPointNormal = GSAddPoints(pt, GSScalePoint(direction, 10000));
-		NSPoint minusClosestPointNormal = GSAddPoints(pt, GSScalePoint(direction, -10000));
-		if (GSDistance(pt, closestPoint) > 35 / _scale) {
-			return nil;
-			// TODO: this is debatable. what is the benefit?
-		}
-		NSArray *crossPoints = [layer calculateIntersectionsStartPoint:closestPointNormal endPoint:minusClosestPointNormal decompose:NO];
-		// note: the first and last objects in crossPoints are identical to the start and end points (or vice versa)
-		if (crossPoints.count <= 2) {
-			// no intersections found
-			return nil;
-		}
-		// remove the first and last element (which are identical to the start and end points or vice versa):
-		crossPoints = [crossPoints subarrayWithRange:NSMakeRange(1, crossPoints.count - 2)];
-		return [StemThickness closestPointsTo:closestPoint inPoints:crossPoints];
+	NSPoint closestPoint = [StemThickness closestPointToCursor:pt onLayer:layer];
+	if ( closestPoint.x == CGFLOAT_MAX ) return nil;
+	NSPoint direction = GSUnitVectorFromTo(pt, closestPoint);
+	NSPoint closestPointNormal = GSAddPoints(pt, GSScalePoint(direction, 10000));
+	NSPoint minusClosestPointNormal = GSAddPoints(pt, GSScalePoint(direction, -10000));
+	if (GSDistance(pt, closestPoint) > 35 / _scale) {
+		return nil;
+		// TODO: this is debatable. what is the benefit?
 	}
-	@catch (NSException *exception) {
-		NSLog(@"__calcClosestInfo: %@", exception);
+	NSArray *crossPoints = [layer calculateIntersectionsStartPoint:closestPointNormal endPoint:minusClosestPointNormal decompose:NO];
+	// note: the first and last objects in crossPoints are identical to the start and end points (or vice versa)
+	if (crossPoints.count <= 2) {
+		// no intersections found
+		return nil;
 	}
-	return nil;
+	// remove the first and last element:
+	crossPoints = [crossPoints subarrayWithRange:NSMakeRange(1, crossPoints.count - 2)];
+	return [StemThickness closestPointsTo:closestPoint inPoints:crossPoints];
 }
 
 - (NSViewController <GSGlyphEditViewControllerProtocol>*)controller {

@@ -177,26 +177,26 @@ static NSColor *pointColor = nil;
 	return v;
 }
 
-// returns one, two or three objects
-+(NSArray *)closestPointsTo:(NSPoint)closestPoint inPoints:(NSArray *)points {
-	if ( points.count <= 2 ) return points;
-	// ^ this is not just for performance,
-	//   it includes the case that there is only one intersection
-	CGFloat prevDistanceSquared = 0;
-	for (int i = 0; i != points.count; ++i) {
+// returns the two points closest to referencePoint
++(NSArray *)closestPointsTo:(NSPoint)referencePoint inPoints:(NSArray *)points {
+	if (points.count <= 1) return points;
+	NSPoint prevPoint = [points.firstObject pointValue];
+	CGFloat toFirstSquared = [StemThickness distanceSquared:prevPoint to:referencePoint];
+	CGFloat prevSquared = toFirstSquared;
+	for (int i = 1; i != points.count; ++i) {
 		NSPoint point = [points[i] pointValue];
-		CGFloat distanceSquared = [StemThickness distanceSquared:point to:closestPoint];
-		if (i != 0 && distanceSquared > prevDistanceSquared) {
-			// as the points are all on one line, and sorted, we know we would not find any closer points.
-			// this means the previous one must be the closest
-			if (i == 1) {
-				return [points subarrayWithRange:NSMakeRange(0, 2)]; // the first two points
-			}
-			return [points subarrayWithRange:NSMakeRange(i-2, 3)]; // closest and two neighbours
+		CGFloat distanceSquared = [StemThickness distanceSquared:point to:referencePoint];
+		CGFloat betweenSquared = [StemThickness distanceSquared:point to:prevPoint];
+		if (betweenSquared > distanceSquared + prevSquared) {
+			return [points subarrayWithRange:NSMakeRange(i-1, 2)];
 		}
-		prevDistanceSquared = distanceSquared;
+		prevSquared = distanceSquared;
+		prevPoint = point;
 	}
-	return [points subarrayWithRange:NSMakeRange(points.count - 2, 2)]; // the last two points
+	// must be outside the points.
+	NSUInteger loc = (toFirstSquared < prevSquared) ? 0 : (points.count - 2);
+	// ^ keep in mind that prevDistanceSquared is the distance to the last point
+	return [points subarrayWithRange:NSMakeRange(loc, 2)]; // the first or last two points
 }
 
 - (void)drawCrossingsForPoints:(NSArray *)crossPoints {
@@ -314,7 +314,7 @@ static NSColor *pointColor = nil;
 			//       just like Glyphs’ measurement tool
 		}
 	}
-	return [StemThickness closestPointsTo:closestPoint inPoints:crossPoints];
+	return [StemThickness closestPointsTo:pt inPoints:crossPoints];
 }
 
 - (NSViewController <GSGlyphEditViewControllerProtocol>*)controller {

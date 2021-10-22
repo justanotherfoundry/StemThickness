@@ -249,7 +249,8 @@ static NSColor *pointColor = nil;
 +(NSPoint)closestPointToCursor:(NSPoint)cursor onLayer:(GSLayer *)layer {
 	NSPoint closestPoint = NSMakePoint(CGFLOAT_MAX, CGFLOAT_MAX);
 	CGFloat closestDistSquared = CGFLOAT_MAX;
-	for (GSPath *path in layer.paths) {
+	GSLayer * decomposedLayer = [layer copyDecomposedLayer];
+	for (GSPath *path in decomposedLayer.paths) {
 		CGFloat currPathTime; // just a dummy, result unused
 		NSPoint currClosestPoint = [path nearestPointOnPath:cursor pathTime:&currPathTime];
 		CGFloat currDistSquared = [StemThickness distanceSquared:cursor to:currClosestPoint];
@@ -276,7 +277,7 @@ static NSColor *pointColor = nil;
 	}
 	closestPointNormal.x -= xOffset;
 	minusClosestPointNormal.x -= xOffset;
-	NSArray *crossPointsNeighbour = [neighbour calculateIntersectionsStartPoint:closestPointNormal endPoint:minusClosestPointNormal decompose:NO];
+	NSArray *crossPointsNeighbour = [neighbour calculateIntersectionsStartPoint:closestPointNormal endPoint:minusClosestPointNormal decompose:YES];
 	if (crossPointsNeighbour.count < 2) {
 		// no neighbour intersections
 		return crossPoints;
@@ -298,7 +299,7 @@ static NSColor *pointColor = nil;
 	NSPoint direction = [StemThickness setLongerCoordinate:GSSubtractPoints(pt, closestPoint) toLength:_font.unitsPerEm+layer.width];
 	NSPoint startPoint = GSAddPoints(pt, direction);
 	NSPoint endPoint = GSSubtractPoints(pt, direction);
-	NSArray *crossPoints = [layer calculateIntersectionsStartPoint:startPoint endPoint:endPoint decompose:NO];
+	NSArray *crossPoints = [layer calculateIntersectionsStartPoint:startPoint endPoint:endPoint decompose:YES];
 	// note: the first and last objects in crossPoints are identical to the start and end points (or vice versa)
 	if (crossPoints.count <= 2) {
 		// no intersections found
@@ -307,7 +308,6 @@ static NSColor *pointColor = nil;
 	// remove the first and last element:
 	crossPoints = [crossPoints subarrayWithRange:NSMakeRange(1, crossPoints.count - 2)];
 	
-	assert(xRight > xLeft - 0.001);
 	if (startPoint.x > endPoint.x + 0.001) {
 		// not vertical
 		CGFloat xLeft = [crossPoints.firstObject pointValue].x;

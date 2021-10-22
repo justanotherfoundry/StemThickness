@@ -141,20 +141,14 @@ static NSColor *pointColor = nil;
 }
 
 - (void)drawPoint:(NSPoint)thisPoint size:(CGFloat)size color:(NSColor *)color {
-	
 	if (!color) {
 		color = pointColor;
 	}
 	// from Show Angled Handles by MekkaBlue
-	@try {
-		[color set];
-		NSRect myRect = NSMakeRect(thisPoint.x - size * 0.5, thisPoint.y - size * 0.5, size, size);
-		NSBezierPath *seledinCircles = [NSBezierPath bezierPathWithOvalInRect:myRect];
-		[seledinCircles fill];
-	}
-	@catch (NSException *exception) {
-		NSLog(@"__drawPoint %@", exception);
-	}
+	[color set];
+	NSRect myRect = NSMakeRect(thisPoint.x - size * 0.5, thisPoint.y - size * 0.5, size, size);
+	NSBezierPath *seledinCircles = [NSBezierPath bezierPathWithOvalInRect:myRect];
+	[seledinCircles fill];
 }
 
 - (void)drawDashedStrokeA:(NSPoint)a b:(NSPoint)b {

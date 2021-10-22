@@ -118,7 +118,9 @@ static NSColor *pointColor = nil;
 	_textCursorPosition = view.selectedRange.location;
 	
 	NSArray *intersections = [self intersectionsOnLayer:layer nearMouseCursor:crossHairCenter];
-	if (intersections == nil) return;
+	if (intersections == nil || intersections.count == 1) {
+		return;
+	}
 	[self drawCrossingsForPoints:intersections];
 }
 
@@ -181,8 +183,11 @@ static NSColor *pointColor = nil;
 	return v;
 }
 
-// returns two or three objects
+// returns one, two or three objects
 +(NSArray *)closestPointsTo:(NSPoint)closestPoint inPoints:(NSArray *)points {
+	if ( points.count <= 2 ) return points;
+	// ^ this is not just for performance,
+	//   it includes the case that there is only one intersection
 	CGFloat prevDistanceSquared = 0;
 	for (int i = 0; i != points.count; ++i) {
 		NSPoint point = [points[i] pointValue];
@@ -302,11 +307,11 @@ static NSColor *pointColor = nil;
 	// remove the first and last element:
 	crossPoints = [crossPoints subarrayWithRange:NSMakeRange(1, crossPoints.count - 2)];
 	
-	CGFloat xLeft = [crossPoints.firstObject pointValue].x;
-	CGFloat xRight = [crossPoints.lastObject pointValue].x;
 	assert(xRight > xLeft - 0.001);
-	if (xRight > xLeft + 0.001) {
+	if (startPoint.x > endPoint.x + 0.001) {
 		// not vertical
+		CGFloat xLeft = [crossPoints.firstObject pointValue].x;
+		CGFloat xRight = [crossPoints.lastObject pointValue].x;
 		if (pt.x < xLeft || pt.x > xRight) {
 			// outside the crossPoints
 			crossPoints = [self intersectionsOnNeighbourLayer:layer left:(pt.x < xLeft) crossPoints:crossPoints closestPointNormal:startPoint minusClosestPointNormal:endPoint];

@@ -20,6 +20,9 @@
 #import <GlyphsCore/GSCallbackHandler.h>
 #import <GlyphsCore/NSString+BadgeDrawing.h>
 #import <GlyphsCore/GSWindowControllerProtocol.h>
+#import <GlyphsCore/GSGeometrieHelper.h>
+#import <vector>
+#import <algorithm>
 
 @interface GSWindowController: NSWindowController<GSWindowControllerProtocol>
 @property NSArray *toolInstances;
@@ -255,6 +258,40 @@ static NSColor *pointColor = nil;
 		}
 	}
 	return closestPoint;
+}
+
++(NSPoint)closestPointToCursorNEW:(NSPoint)cursor onLayer:(GSLayer *)layer {
+	GSLayer * decomposedLayer = [layer copyDecomposedLayer];
+	std::vector<std::pair<double,std::pair<double, double>>> closestPoints;
+	for (GSPath *path in decomposedLayer.paths) {
+		for ( int i = 0; i != path.countOfNodes; ++i ) {
+			GSNode * p0 = path.nodes[i];
+			if ( p0.type == OFFCURVE ) continue;
+			GSNode * p1 = path.nodes[(i+1) % path.countOfNodes];
+			CGFloat t;
+			NSPoint nearestPointInSegment;
+			if ( p1.type == OFFCURVE ) {
+				GSNode * p2 = path.nodes[(i+2) % path.countOfNodes];
+				GSNode * p3 = path.nodes[(i+3) % path.countOfNodes];
+				assert( p3 == p0.nextOncurveNode );
+				NSPoint p0p = p0.position;
+				NSPoint p1p = p1.position;
+				NSPoint p2p = p2.position;
+				NSPoint p3p = p3.position;
+				CGFloat * tp = &t;
+				nearestPointInSegment = GSNearestPointOnCurve( cursor, p0p, p1p, p2p, p3p, tp );
+			}
+			else {
+				assert( p1 == p0.nextOncurveNode );
+//				nearestPointInSegment = GSNearestPointOnLine( cursor, p0.position, p1.position, &t );
+			}
+			CGFloat dsq = [StemThickness distanceSquared:cursor to:nearestPointInSegment];
+			closestPoints.emplace_back( dsq, std::make_pair( nearestPointInSegment.x, nearestPointInSegment.y ) );
+		}
+	}
+	std::sort( closestPoints.begin(), closestPoints.end() );
+	auto nearest = closestPoints.front().second;
+	return NSMakePoint( nearest.first, nearest.second );
 }
 
 - (NSArray *)intersectionsOnNeighbourLayer:(GSLayer *)layer left:(BOOL)left crossPoints:(NSArray *)crossPoints closestPointNormal:(NSPoint)closestPointNormal minusClosestPointNormal:(NSPoint)minusClosestPointNormal {

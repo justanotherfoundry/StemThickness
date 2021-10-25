@@ -7,19 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2295AEA72726C5630089FD09 /* GlyphsCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2295AEA52726C51F0089FD09 /* GlyphsCore.framework */; };
 		56F2F7EF2606B0CF00AE26EF /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56F2F7EE2606B0CF00AE26EF /* Cocoa.framework */; };
-		56F2F7F32606B0CF00AE26EF /* StemThickness.m in Sources */ = {isa = PBXBuildFile; fileRef = 56F2F7F22606B0CF00AE26EF /* StemThickness.m */; };
-		56F2F8052606B0F200AE26EF /* GlyphsCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56F2F8042606B0F200AE26EF /* GlyphsCore.framework */; };
+		56F2F7F32606B0CF00AE26EF /* StemThickness.mm in Sources */ = {isa = PBXBuildFile; fileRef = 56F2F7F22606B0CF00AE26EF /* StemThickness.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2295AEA52726C51F0089FD09 /* GlyphsCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GlyphsCore.framework; path = "/Applications/Glyphs 3.app/Contents/Frameworks/GlyphsCore.framework"; sourceTree = "<absolute>"; };
 		56F2F7EB2606B0CF00AE26EF /* StemThickness.glyphsReporter */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StemThickness.glyphsReporter; sourceTree = BUILT_PRODUCTS_DIR; };
 		56F2F7EE2606B0CF00AE26EF /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		56F2F7F12606B0CF00AE26EF /* StemThickness.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StemThickness.h; sourceTree = "<group>"; };
-		56F2F7F22606B0CF00AE26EF /* StemThickness.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StemThickness.m; sourceTree = "<group>"; };
+		56F2F7F22606B0CF00AE26EF /* StemThickness.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = StemThickness.mm; sourceTree = "<group>"; };
 		56F2F7F62606B0CF00AE26EF /* StemThickness-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "StemThickness-Prefix.pch"; sourceTree = "<group>"; };
 		56F2F7F82606B0CF00AE26EF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		56F2F8042606B0F200AE26EF /* GlyphsCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = GlyphsCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				56F2F8052606B0F200AE26EF /* GlyphsCore.framework in Frameworks */,
+				2295AEA72726C5630089FD09 /* GlyphsCore.framework in Frameworks */,
 				56F2F7EF2606B0CF00AE26EF /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -55,7 +55,7 @@
 		56F2F7ED2606B0CF00AE26EF /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				56F2F8042606B0F200AE26EF /* GlyphsCore.framework */,
+				2295AEA52726C51F0089FD09 /* GlyphsCore.framework */,
 				56F2F7EE2606B0CF00AE26EF /* Cocoa.framework */,
 			);
 			name = Frameworks;
@@ -65,7 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				56F2F7F12606B0CF00AE26EF /* StemThickness.h */,
-				56F2F7F22606B0CF00AE26EF /* StemThickness.m */,
+				56F2F7F22606B0CF00AE26EF /* StemThickness.mm */,
 				56F2F7F62606B0CF00AE26EF /* StemThickness-Prefix.pch */,
 				56F2F7F82606B0CF00AE26EF /* Info.plist */,
 			);
@@ -139,7 +139,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				56F2F7F32606B0CF00AE26EF /* StemThickness.m in Sources */,
+				56F2F7F32606B0CF00AE26EF /* StemThickness.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -240,6 +240,7 @@ static NSColor *pointColor = nil;
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+
 +(NSPoint)closestPointToCursor:(NSPoint)cursor onLayer:(GSLayer *)layer {
 	NSPoint closestPoint = NSMakePoint(CGFLOAT_MAX, CGFLOAT_MAX);
 	CGFloat closestDistSquared = CGFLOAT_MAX;
